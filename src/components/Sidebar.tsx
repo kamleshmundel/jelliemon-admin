@@ -7,8 +7,8 @@ import { MoreVertical } from "lucide-react";
 const sideUrls = [
   { name: 'Users', url: ROUTES.users, icon: Users },
   { name: 'Subjects', url: ROUTES.subjects, icon: BookOpen },
-  { name: 'Units', url: ROUTES.units, icon: Layers },
   { name: 'Lessons', url: ROUTES.lessons, icon: BookMarked },
+  { name: 'Units', url: ROUTES.units, icon: Layers },
   { name: 'Questions', url: ROUTES.questions, icon: HelpCircle },
 ].map((url, i) => ({ id: i + 1, ...url }))
 

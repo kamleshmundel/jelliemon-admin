@@ -3,27 +3,23 @@ import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { Trash2, Edit2, X } from "lucide-react";
 import subjectsServices from "../subjects/service";
-import unitsServices from "../units/service";
 import lessonsServices from "./service";
 import { notify } from "../../utils/helpers";
 import { Comps } from "../../components";
 
 const initPageObj = { page: 1, total: 0 };
-const schema = Yup.object({ title: Yup.string().required(), subjectId: Yup.number().required(), unitId: Yup.number().required() });
+const schema = Yup.object({ title: Yup.string().required(), subjectId: Yup.number().required() });
 
 export default function LessonsTab() {
     const [lessons, setLessons] = useState<any[]>([]);
     const [subjects, setSubjects] = useState<any[]>([]);
-    const [units, setUnits] = useState<any[]>([]);
     const [modalLesson, setModalLesson] = useState<any>(null);
     const [selectedSubject, setSelectedSubject] = useState<number>(0);
-    const [selectedUnit, setSelectedUnit] = useState<number>(0);
     const [pageObj, setPageObj] = useState(initPageObj);
-    const perPage = 10;
+    const perPage = 15;
 
     useEffect(() => { getSubjects(); }, []);
-    useEffect(() => { if (selectedSubject) getUnits(selectedSubject); }, [selectedSubject]);
-    useEffect(() => { if (selectedUnit) getLessons(pageObj.page); }, [selectedUnit, pageObj.page]);
+    useEffect(() => { getLessons(pageObj.page); }, [pageObj.page, selectedSubject]);
 
     const getSubjects = async () => {
         try {
@@ -33,17 +29,11 @@ export default function LessonsTab() {
         } catch (err: any) { notify.error(err?.message); }
     };
 
-    const getUnits = async (subjectId: number) => {
-        try {
-            const { data } = await unitsServices.getUnits({ subjectId, no_pagination: true });
-            setUnits(data);
-            if (data.length) setSelectedUnit(data[0].id);
-        } catch (err: any) { notify.error(err?.message); }
-    };
-
     const getLessons = async (page: number) => {
         try {
-            const { data } = await lessonsServices.getLessons({ page, unit: selectedUnit });
+            if(!selectedSubject) return;
+            const reqObj = { subject: selectedSubject, page, page_size: perPage };
+            const { data } = await lessonsServices.getLessons(reqObj);
             setLessons(data.results);
             setPageObj(pre => ({ ...pre, total: data.count }));
         } catch (err: any) { notify.error(err?.message); }
@@ -75,7 +65,7 @@ export default function LessonsTab() {
         <div className="p-4 min-h-screen text-zinc-200">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-semibold text-white">Lessons</h2>
-                <button onClick={() => setModalLesson({ subjectId: selectedSubject, unitId: selectedUnit })} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-md text-white transition">
+                <button onClick={() => setModalLesson({ subjectId: selectedSubject })} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-md text-white transition">
                     Add Lesson
                 </button>
             </div>
@@ -83,14 +73,8 @@ export default function LessonsTab() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 <div>
                     <label className="block mb-1 font-medium text-zinc-200">Select Subject</label>
-                    <select value={selectedSubject} onChange={e => { setSelectedSubject(Number(e.target.value)); setSelectedUnit(0); }} className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
+                    <select value={selectedSubject} onChange={e => setSelectedSubject(Number(e.target.value))} className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
                         {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
-                </div>
-                <div>
-                    <label className="block mb-1 font-medium text-zinc-200">Select Unit</label>
-                    <select value={selectedUnit} onChange={e => setSelectedUnit(Number(e.target.value))} className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
-                        {units.map(u => <option key={u.id} value={u.id}>{u.title}</option>)}
                     </select>
                 </div>
             </div>
@@ -100,7 +84,6 @@ export default function LessonsTab() {
                     <tr>
                         <th className="px-4 py-3 text-left">ID</th>
                         <th className="px-4 py-3 text-left">Lesson</th>
-                        <th className="px-4 py-3 text-left">Unit</th>
                         <th className="px-4 py-3 text-left">Actions</th>
                     </tr>
                 </thead>
@@ -109,7 +92,6 @@ export default function LessonsTab() {
                         <tr key={l.id} className="border-t border-zinc-800 hover:bg-zinc-800 transition">
                             <td className="px-4 py-2">{l.id}</td>
                             <td className="px-4 py-2">{l.title}</td>
-                            <td className="px-4 py-2">{l.unit_title || "-"}</td>
                             <td className="px-4 py-2 flex gap-2">
                                 <button onClick={() => onDelete(l.id)} className="flex items-center gap-1 px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-sm transition">
                                     <Trash2 size={16} /> Delete
@@ -132,18 +114,12 @@ export default function LessonsTab() {
                             <X size={18} />
                         </button>
                         <h3 className="text-lg font-medium mb-4 text-white">{modalLesson.id ? "Edit Lesson" : "Add Lesson"}</h3>
-                        <Formik initialValues={{ title: modalLesson.title || "", subjectId: modalLesson.subjectId || selectedSubject, unitId: modalLesson.unitId || selectedUnit }} validationSchema={schema} onSubmit={onSubmit}>
+                        <Formik initialValues={{ title: modalLesson.title || "", subjectId: modalLesson.subjectId || selectedSubject }} validationSchema={schema} onSubmit={onSubmit}>
                             <Form className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-zinc-200">Subject</label>
                                     <Field as="select" name="subjectId" className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
                                         {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                    </Field>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1 text-zinc-200">Unit</label>
-                                    <Field as="select" name="unitId" className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
-                                        {units.map(u => <option key={u.id} value={u.id}>{u.title}</option>)}
                                     </Field>
                                 </div>
                                 <div>

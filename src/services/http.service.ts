@@ -41,7 +41,7 @@ axiosInstance.interceptors.response.use(
         return response?.data;
     },
     (error) => {
-        if (error?.response?.status === 401) {
+        if ([401, 403].includes(error?.response?.status)) {
             localStorage.clear();
             window.location.replace(ROUTES.login);
         }

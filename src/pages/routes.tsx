@@ -8,12 +8,19 @@ import Units from "./units";
 import Questions from "./questions";
 import { Outlet } from "react-router-dom";
 import AddQue from "./questions/AddQue";
+import AddUnit from "./units/AddUnit";
 
 const PAGE_ROUTES = [
     { path: "", element: <Dashboard /> },
     { path: "users", element: <Users /> },
     { path: "subjects", element: <Subjects /> },
-    { path: "units", element: <Units /> },
+    {
+        path: "units", element: <Outlet />,
+        children: [
+            { path: "", element: <Units /> },
+            { path: "add-edit", element: <AddUnit /> },
+        ]
+    },
     { path: "lessons", element: <Lessions /> },
     {
         path: "questions", element: <Outlet />,

@@ -5,6 +5,9 @@ import { Trash2, Edit2, X } from "lucide-react";
 import { notify } from "../../utils/helpers";
 import subjectsServices from "./service";
 import { Comps } from "../../components";
+import { boards as boardObj } from "../../utils/constants";
+
+const boards = Object.entries(boardObj).map(([_, v]) => ({ name: v, value: v }));
 
 const schema = Yup.object({ name: Yup.string().required(), board: Yup.string().required() });
 
@@ -13,16 +16,17 @@ const initPageObj = { page: 1, total: 0, };
 export default function SubjectsTab() {
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [modalSubject, setModalSubject] = useState<any>(null);
+    const [selectedBoard, setSelectedBoard] = useState(boards[0]?.value);
     const [pageObj, setPageObj] = useState(initPageObj);
     const perPage = 15;
 
     useEffect(() => {
         getSubjects(pageObj.page);
-    }, [pageObj.page]);
+    }, [selectedBoard, pageObj.page]);
 
     const getSubjects = async (page: number) => {
         try {
-            const reqObj = { page, page_size: perPage };
+            const reqObj = { page, page_size: perPage, board: selectedBoard };
             const { data } = await subjectsServices.getSubjects(reqObj);
             setSubjects(data.results)
             setPageObj(pre => ({ ...pre, total: data.count }))
@@ -52,6 +56,16 @@ export default function SubjectsTab() {
                     Add Subject
                 </button>
             </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label className="block mb-1 font-medium text-zinc-200">Select Subject</label>
+                    <select value={selectedBoard} onChange={e => setSelectedBoard(e.target.value)} className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
+                        {boards.map(s => <option key={s.value} value={s.value}>{s.name}</option>)}
+                    </select>
+                </div>
+            </div>
+
             <table className="min-w-full bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
                 <thead className="bg-zinc-800 text-zinc-400">
                     <tr>
@@ -102,9 +116,7 @@ export default function SubjectsTab() {
                                     <label className="block text-sm font-medium mb-1 text-zinc-200">Board</label>
                                     <Field as="select" name="board" className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
                                         <option value="">Select Board</option>
-                                        <option value="CBSE">CBSE</option>
-                                        <option value="ICSE">ICSE</option>
-                                        <option value="State">State</option>
+                                        {boards.map(s => <option key={s.value} value={s.value}>{s.name}</option>)}
                                     </Field>
                                     <ErrorMessage name="board" component="div" className="text-xs text-red-500 mt-1" />
                                 </div>

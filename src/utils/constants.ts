@@ -7,6 +7,7 @@ export const ROUTES = {
     users: "/users",
     subjects: "/subjects",
     units: "/units",
+    unitAddEdit: "/units/add-edit",
     lessons: "/lessons",
     questions: "/questions",
     queAddEdit: "/questions/add-edit",
@@ -22,4 +23,10 @@ export const quetype: { [key: string]: string } = {
     ssl: "Single Selection",
     mcq: "Multiple Choice",
     true_false: "True/False",
+}
+
+export const boards = {
+    RBSE: "RBSE",
+    CBSE: "CBSE",
+    IBSE: "IBSE",
 }

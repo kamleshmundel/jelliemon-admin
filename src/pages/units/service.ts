@@ -9,6 +9,9 @@ const unitsServices = {
     addUnits: async (data: any) => {
         return await httpServices.postData(prefix + "units", data)
     },
+    deleteUnit: async (data: any) => {
+        return await httpServices.deleteData(prefix + "units", data)
+    },
 }
 
 export default unitsServices
