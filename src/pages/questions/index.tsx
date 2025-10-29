@@ -28,9 +28,9 @@ export default function LessonsTab() {
   const nav = useNavigate();
 
   useEffect(() => { getSubjects(); }, []);
-  useEffect(() => { if (selectedSubject) getUnits(selectedSubject); }, [selectedSubject]);
-  useEffect(() => { if (selectedUnit) getLessons(selectedUnit); }, [selectedUnit, pageObj.page]);
-  useEffect(() => { if (selectedLesson) getQuestions(selectedLesson, pageObj.page); }, [selectedLesson, pageObj.page]);
+  useEffect(() => { if (selectedSubject) getLessons(selectedSubject); }, [selectedSubject]);
+  useEffect(() => { if (selectedLesson) getUnits(selectedLesson); }, [selectedLesson]);
+  useEffect(() => { if (selectedUnit) getQuestions(selectedUnit, pageObj.page); }, [selectedUnit, pageObj.page]);
 
   const getSubjects = async () => {
     try {
@@ -40,29 +40,29 @@ export default function LessonsTab() {
     } catch (err: any) { notify.error(err?.message); }
   };
 
-  const getUnits = async (subjectId: number) => {
+  const getUnits = async (lessonId: number) => {
     try {
-      const { data } = await unitsServices.getUnits({ subjectId, no_pagination: true });
+      const { data } = await unitsServices.getUnits({ lessonId, no_pagination: true });
       setUnits(data);
       if (data.length) setSelectedUnit(data[0].id);
     } catch (err: any) { notify.error(err?.message); }
   };
 
-  const getLessons = async (selectedUnit: number) => {
+  const getLessons = async (selectedSubject: number) => {
     try {
-      const { data } = await lessonsServices.getLessons({ no_pagination: true, unit: selectedUnit });
+      const { data } = await lessonsServices.getLessons({ no_pagination: true, subject: selectedSubject });
       setLessons(data);
       if (data.length) setSelectedLesson(data[0].id);
     } catch (err: any) { notify.error(err?.message); }
   };
 
-  const getQuestions = async (lesson_id: number, page: number = 1) => {
+  const getQuestions = async (unit_id: number, page: number = 1) => {
     try {
-      const reqObj = { lesson_id, page, page_size: perPage };
+      const reqObj = { unit_id, page, page_size: perPage };
       const { data } = await questionsServices.getQuestions(reqObj);
-      setQuestions(data?.results|| [])
-      setPageObj(pre => ({...pre, total: data.count}));
-    } catch(err: any) {
+      setQuestions(data?.results || [])
+      setPageObj(pre => ({ ...pre, total: data.count }));
+    } catch (err: any) {
       notify.error(err?.message)
     }
   }
@@ -79,7 +79,7 @@ export default function LessonsTab() {
   }
 
   const onAddEdit = (id?: number) => {
-    nav(ROUTES.queAddEdit +`${id ? `?id=${id}` : ""}`)
+    nav(ROUTES.queAddEdit + `${id ? `?id=${id}` : ""}`)
   }
 
   return (
@@ -94,20 +94,20 @@ export default function LessonsTab() {
       <div className="grid grid-cols-3  gap-4 mb-4">
         <div>
           <label className="block mb-1 font-medium text-zinc-200">Select Subject</label>
-          <select value={selectedSubject} onChange={e => { setSelectedSubject(Number(e.target.value)); setSelectedUnit(0); }} className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
+          <select value={selectedSubject} onChange={e => { setSelectedSubject(Number(e.target.value)); setSelectedLesson(0); }} className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
             {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium text-zinc-200">Select Unit</label>
-          <select value={selectedUnit} onChange={e => setSelectedUnit(Number(e.target.value))} className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
-            {units.map(u => <option key={u.id} value={u.id}>{u.title}</option>)}
           </select>
         </div>
         <div>
           <label className="block mb-1 font-medium text-zinc-200">Select Lesson</label>
           <select value={selectedLesson} onChange={e => setSelectedLesson(Number(e.target.value))} className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
             {lessons.map(u => <option key={u.id} value={u.id}>{u.title}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block mb-1 font-medium text-zinc-200">Select Unit</label>
+          <select value={selectedUnit} onChange={e => setSelectedUnit(Number(e.target.value))} className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
+            {units.map(u => <option key={u.id} value={u.id}>{u.title}</option>)}
           </select>
         </div>
       </div>

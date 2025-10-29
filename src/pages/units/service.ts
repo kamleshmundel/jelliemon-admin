@@ -7,7 +7,9 @@ const unitsServices = {
         return await httpServices.getData(prefix + "units", data)
     },
     addUnits: async (data: any) => {
-        return await httpServices.postData(prefix + "units", data)
+        const headers: any = { "Content-Type": "multipart/form-data" };
+
+        return await httpServices.postData(prefix + "units", data, headers)
     },
     deleteUnit: async (data: any) => {
         return await httpServices.deleteData(prefix + "units", data)

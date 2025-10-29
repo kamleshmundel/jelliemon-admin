@@ -25,52 +25,55 @@ import { ROUTES } from "../../utils/constants";
 const initFiltersData: InitFiltersData = { subjects: [], units: [], lessons: [] };
 const initSelectedFilters = { subjectId: 0, unitId: 0, lessonId: 0 };
 
+type Answer = { text: string; is_correct: boolean; image: string; }
+
 const QuesForm = () => {
   const [optionImage, setOptionImage] = useState(false);
 
   const [filtersData, setFiltersData] = useState(initFiltersData);
-  const [selectedDilters, setSelectedDilters] = useState(initSelectedFilters);
+  const [selectedFilters, setSelectedFilters] = useState(initSelectedFilters);
 
   const nav = useNavigate();
 
-  useEffect(() => {
-    getSubjects();
-  }, []);
+  // useEffect(() => { getSubjects(); }, []);
+
+  useEffect(() => { getSubjects(); }, []);
+  useEffect(() => { if (selectedFilters.subjectId) getLessons(selectedFilters.subjectId); }, [selectedFilters.subjectId]);
+  useEffect(() => { if (selectedFilters.lessonId) getUnits(selectedFilters.lessonId); }, [selectedFilters.lessonId]);
 
   const getSubjects = async () => {
     try {
       const { data } = await subjectsServices.getSubjects({ no_pagination: true });
       if (data.length) {
         setFiltersData(pre => ({ ...pre, subjects: data }));
-        setSelectedDilters(pre => ({ ...pre, subjectId: data[0]?.id }));
-        await getUnits(data[0]?.id);
+        setSelectedFilters(pre => ({ ...pre, subjectId: data[0]?.id }));
       }
     } catch (err: any) {
       notify.error(err?.message)
     }
   }
 
-  const getUnits = async (subjectId: number) => {
+  const getLessons = async (subjectId: number) => {
     try {
       if (!subjectId) return;
-      const { data } = await unitsServices.getUnits({ no_pagination: true });
+      const { data } = await lessonsServices.getLessons({ no_pagination: true, subject: subjectId });
       if (data.length) {
-        setFiltersData(pre => ({ ...pre, units: data.map((d: Unit) => ({ ...d, name: d.title })) }));
-        setSelectedDilters(pre => ({ ...pre, unitId: data[0]?.id }));
-        await getLessons(data[0].id);
+        setFiltersData(pre => ({ ...pre, lessons: data.map((d: Lesson) => ({ ...d, name: d.title })) }));
+        setSelectedFilters(pre => ({ ...pre, lessonId: data[0]?.id }));
       }
     } catch (err: any) {
       notify.error(err?.message)
     }
   }
 
-  const getLessons = async (unitId: number) => {
+  const getUnits = async (lessonId: number) => {
     try {
-      if (!unitId) return;
-      const { data } = await lessonsServices.getLessons({ no_pagination: true });
+      if (!lessonId) return;
+      const { data } = await unitsServices.getUnits({ no_pagination: true, lessonId });
       if (data.length) {
-        setFiltersData(pre => ({ ...pre, lessons: data.map((d: Lesson) => ({ ...d, name: d.title })) }));
-        setSelectedDilters(pre => ({ ...pre, lessonId: data[0]?.id }));
+        setFiltersData(pre => ({ ...pre, units: data.map((d: Unit) => ({ ...d, name: d.title })) }));
+        setSelectedFilters(pre => ({ ...pre, unitId: data[0]?.id }));
+        // await getLessons(data[0].id);
       }
     } catch (err: any) {
       notify.error(err?.message)
@@ -89,6 +92,28 @@ const QuesForm = () => {
         optionImage
       }
 
+
+const formData = new FormData()
+
+formData.append('unit', values.unit)
+formData.append('title', values.title)
+formData.append('content', values.content)
+formData.append('type', values.type)
+if (values.asset) formData.append('asset', values.asset)
+formData.append('optionImage', formatedValues.optionImage)
+formData.append('hint', values.hint)
+
+formatedValues.options.forEach((opt: Answer, i: number) => {
+  formData.append(`options[${i}][text]`, opt.text || '')
+  formData.append(`options[${i}][is_correct]`, opt.is_correct ? 'true' : 'false')
+  if (opt.image) formData.append(`options[${i}][image]`, opt.image)
+})
+
+
+
+
+      
+
       const { message }: any = await questionsServices.addQuestion(formatedValues);
       notify.success(message)
       nav(ROUTES.questions)
@@ -99,17 +124,17 @@ const QuesForm = () => {
   }
 
   const filtersList = [
-    { label: "Subject", name: "subject", data: filtersData.subjects, onGet: () => { } },
-    { label: "Unit", name: "unit", data: filtersData.units, onGet: () => { } },
-    { label: "Lesson", name: "lesson", data: filtersData.lessons, onGet: () => { } }
+    { label: "Subject", name: "subject", dVal: selectedFilters.subjectId, data: filtersData.subjects, onGet: (v: number) => setSelectedFilters(pre => ({...pre, subjectId: v})) },
+    { label: "Lesson", name: "lesson", dVal: selectedFilters.lessonId, data: filtersData.lessons, onGet: (v: number) => setSelectedFilters(pre => ({...pre, lessonId: v})) },
+    { label: "Unit", name: "unit", dVal: selectedFilters.unitId, data: filtersData.units, onGet: (v: number) => setSelectedFilters(pre => ({...pre, unitId: v})) },
   ];
 
   return (
     <Formik
       initialValues={{
-        subject: selectedDilters.subjectId,
-        unit: selectedDilters.unitId,
-        lesson: selectedDilters.lessonId,
+        subject: selectedFilters.subjectId,
+        unit: selectedFilters.unitId,
+        lesson: selectedFilters.lessonId,
         title: "",
         type: "ssl",
         content: "",
@@ -128,10 +153,10 @@ const QuesForm = () => {
             {filtersList.map(f => (
               <div key={f.name}>
                 <label className="block text-sm font-medium mb-1">{f.label}</label>
-                <Field as="select" name={f.name} className="w-full border border-zinc-700 rounded px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
+                <select value={f.dVal} onChange={(e) => f.onGet(+e.target.value)} name={f.name} className="w-full border border-zinc-700 rounded px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
                   <option value="">Select</option>
                   {f.data.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-                </Field>
+                </select>
               </div>
             ))}
           </div>

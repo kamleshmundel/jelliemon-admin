@@ -7,8 +7,8 @@ const questionsServices = {
         return await httpServices.getData(prefix + "questions", data)
     },
     addQuestion: async (data: any) => {
-        // const headers = {  }
-        return await httpServices.postData(prefix + "questions", data)
+        const headers: any = { "Content-Type": "multipart/form-data" };
+        return await httpServices.postData(prefix + "questions", data, headers)
     },
     deleteQuestion: async (data: any) => {
         return await httpServices.deleteData(prefix + "questions", data)
