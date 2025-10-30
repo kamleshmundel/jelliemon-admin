@@ -126,7 +126,7 @@ export default function Units() {
                             <td className="px-4 py-2">{l.title}</td>
                             <td className="px-4 py-2">{l?.parts?.length || 0}</td>
                             <td className="px-4 py-2">{l?.parts.map((p: any) => {
-                                return p.audio.split('/').reverse()[0];
+                                return p?.audio?.split('/')?.reverse()[0];
                             }).join(', ') || '-'}</td>
                             <td className="px-4 py-2 flex gap-2">
                                 <button onClick={() => onDelete(l.id)} className="flex items-center gap-1 px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-sm transition">

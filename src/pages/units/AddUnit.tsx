@@ -17,7 +17,7 @@ const schema = Yup.object({
         .of(
             Yup.object({
                 id: Yup.mixed().nullable(),
-                title: Yup.string().required("Part title is required"),
+                title: Yup.string().optional(),
                 content: Yup.string().required("Part content is required"),
                 audio: Yup.mixed().nullable().test(
                     "fileSize",
