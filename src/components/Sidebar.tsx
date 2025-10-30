@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { ROUTES } from '../utils/constants'
 import { Users, BookOpen, Layers, BookMarked, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { MoreVertical } from "lucide-react";
@@ -55,6 +55,8 @@ function AdminFooter({ open }:{ open: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  const nav = useNavigate();
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setMenuOpen(false);
@@ -62,6 +64,11 @@ function AdminFooter({ open }:{ open: boolean }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const onLogout = () => {
+    localStorage.clear();
+    nav(ROUTES.login);
+  }
 
   return (
     <div className="relative p-4 border-t border-zinc-800 flex items-center justify-between">
@@ -79,7 +86,7 @@ function AdminFooter({ open }:{ open: boolean }) {
         {menuOpen && (
           <div className="absolute right-0 bottom-12 bg-zinc-900 border border-zinc-700 rounded-md overflow-hidden w-40">
             <button className="w-full text-left px-3 py-2 text-sm text-white hover:bg-zinc-800">Change Password</button>
-            <button className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-zinc-800">Logout</button>
+            <button className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-zinc-800" onClick={onLogout}>Logout</button>
           </div>
         )}
       </div>
