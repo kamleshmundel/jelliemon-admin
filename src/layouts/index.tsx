@@ -2,9 +2,12 @@ import { Outlet } from 'react-router-dom'
 import { Comps } from '../components'
 
 const FullLayout = () => {
-    return (
-        <Outlet />
-    )
+  return (
+    <div className='bg-darkBg text-darkText'>
+
+      <Outlet />
+    </div>
+  )
 }
 
 const ContentLayout = () => {
