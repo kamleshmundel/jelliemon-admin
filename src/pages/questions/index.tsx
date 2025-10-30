@@ -89,8 +89,11 @@ export default function LessonsTab() {
     try {
       if (confirm("Are you sure?")) {
         loader.set();
-        const { message }: any = await lessonsServices.deleteLessons({ id });
+        const { message }: any = await questionsServices.deleteQuestion({ id });
         notify.success(message);
+
+        if(pageObj.page === 1) getQuestions(selectedUnit);
+        else setPageObj(initPageObj);
       }
     } catch (err: any) {
       notify.error(err?.message);

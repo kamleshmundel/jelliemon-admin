@@ -8,7 +8,7 @@ import subjectsServices from "../subjects/service";
 import unitsServices from "../units/service";
 import lessonsServices from "../lessons/service";
 import questionsServices from "./service";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ROUTES } from "../../utils/constants";
 import { Comps } from "../../components";
 
@@ -28,13 +28,33 @@ const initSelectedFilters = { subjectId: 0, unitId: 0, lessonId: 0 };
 
 type Answer = { text: string; is_correct: boolean; image: string; }
 
+const initOpts = Array.from({ length: 4 }, () => ({
+  text: "",
+  is_correct: false,
+  image: null
+}));
+
+const initForm = {
+  title: "",
+  type: "mcq",
+  content: "",
+  asset: null,
+  options: [...initOpts],
+  correct: [],
+  hint: "",
+}
+
 const QuesForm = () => {
   const [optionImage, setOptionImage] = useState(false);
 
   const [filtersData, setFiltersData] = useState(initFiltersData);
   const [selectedFilters, setSelectedFilters] = useState(initSelectedFilters);
 
+  const [formData, setFormData] = useState(initForm);
+
   const nav = useNavigate();
+  let [searchParams] = useSearchParams();
+  const queId = searchParams.get("id") || null;
 
   const [loading, setLoading] = useState(false);
   const loader = {
@@ -42,11 +62,39 @@ const QuesForm = () => {
     remove: () => setLoading(false),
   }
 
-  // useEffect(() => { getSubjects(); }, []);
+  useEffect(() => { if(queId) getQueData(+queId); }, [queId]);
 
   useEffect(() => { getSubjects(); }, []);
   useEffect(() => { if (selectedFilters.subjectId) getLessons(selectedFilters.subjectId); }, [selectedFilters.subjectId]);
   useEffect(() => { if (selectedFilters.lessonId) getUnits(selectedFilters.lessonId); }, [selectedFilters.lessonId]);
+
+  const getQueData = async (queId: number) => {
+    try {
+      loader.set();
+      const reqObj = { no_pagination: true, queId };
+      const { data } = await questionsServices.getQuestions(reqObj);
+
+      if(data.length) {
+        const que = data[0];
+
+        setFormData(pre => ({
+          ...pre,
+          title: que?.title,
+          type: que?.type,
+          content: que?.content,
+          hint: que?.hint,
+          options: que?.answers.map((a: Answer) => ({
+            text: a?.text, is_correct: a?.is_correct, image: a?.image
+          }))
+        }));
+      }
+      
+    } catch(err: any) {
+      notify.error(err?.message);
+    } finally {
+      loader.remove();
+    }
+  }
 
   const getSubjects = async () => {
     try {
@@ -108,16 +156,22 @@ const QuesForm = () => {
         optionImage
       }
 
+      if(!formatedValues.options.filter((o: Answer) => o.is_correct).length) {
+        notify.error('Select at least one option.');
+        return;
+      }
 
       const formData = new FormData()
 
-      formData.append('unit', values.unit)
-      formData.append('title', values.title)
-      formData.append('content', values.content)
-      formData.append('type', values.type)
-      if (values.asset) formData.append('asset', values.asset)
+      if(queId) formData.append('id', queId)
+
+      formData.append('unit', formatedValues.unit)
+      formData.append('title', formatedValues.title)
+      formData.append('content', formatedValues.content)
+      formData.append('type', formatedValues.type)
+      if (formatedValues.asset) formData.append('asset', formatedValues.asset)
       formData.append('optionImage', formatedValues.optionImage)
-      formData.append('hint', values.hint)
+      formData.append('hint', formatedValues.hint)
 
       formatedValues.options.forEach((opt: Answer, i: number) => {
         formData.append(`options[${i}][text]`, opt.text || '')
@@ -125,7 +179,7 @@ const QuesForm = () => {
         if (opt.image) formData.append(`options[${i}][image]`, opt.image)
       })
 
-      const { message }: any = await questionsServices.addQuestion(formatedValues);
+      const { message }: any = await questionsServices.addQuestion(formData);
       notify.success(message)
       nav(ROUTES.questions)
 
@@ -150,13 +204,7 @@ const QuesForm = () => {
           subject: selectedFilters.subjectId,
           unit: selectedFilters.unitId,
           lesson: selectedFilters.lessonId,
-          title: "",
-          type: "ssl",
-          content: "",
-          asset: null,
-          options: [{ text: "", is_correct: false, image: null }],
-          correct: [],
-          hint: "",
+          ...formData
         }}
         // validationSchema={schema}
         onSubmit={onSubmit}

@@ -124,9 +124,7 @@ const AddUnit = () => {
             formData.append('subjectId', reqObj.subjectId);
 
             if (deletedAudio.length) {
-                deletedAudio.forEach((del, i) => {
-                    formData.append(`deletedAudio[${i}]`, del);
-                });
+                formData.append('deletedAudio', deletedAudio.join(','))
             }
 
             // Append parts and their respective audio files
