@@ -39,6 +39,7 @@ const initForm = {
   type: "mcq",
   content: "",
   asset: null,
+  audio: null,
   options: [...initOpts],
   correct: [],
   hint: "",
@@ -51,6 +52,7 @@ const QuesForm = () => {
   const [selectedFilters, setSelectedFilters] = useState(initSelectedFilters);
 
   const [formData, setFormData] = useState(initForm);
+  const [deletedAudio, setDeletedAudio] = useState<string[]>([]);
 
   const nav = useNavigate();
   let [searchParams] = useSearchParams();
@@ -62,7 +64,7 @@ const QuesForm = () => {
     remove: () => setLoading(false),
   }
 
-  useEffect(() => { if(queId) getQueData(+queId); }, [queId]);
+  useEffect(() => { if (queId) getQueData(+queId); }, [queId]);
 
   useEffect(() => { getSubjects(); }, []);
   useEffect(() => { if (selectedFilters.subjectId) getLessons(selectedFilters.subjectId); }, [selectedFilters.subjectId]);
@@ -74,7 +76,7 @@ const QuesForm = () => {
       const reqObj = { no_pagination: true, queId };
       const { data } = await questionsServices.getQuestions(reqObj);
 
-      if(data.length) {
+      if (data.length) {
         const que = data[0];
 
         setFormData(pre => ({
@@ -83,13 +85,14 @@ const QuesForm = () => {
           type: que?.type,
           content: que?.content,
           hint: que?.hint,
+          audio: que?.audio,
           options: que?.answers.map((a: Answer) => ({
             text: a?.text, is_correct: a?.is_correct, image: a?.image
           }))
         }));
       }
-      
-    } catch(err: any) {
+
+    } catch (err: any) {
       notify.error(err?.message);
     } finally {
       loader.remove();
@@ -156,22 +159,27 @@ const QuesForm = () => {
         optionImage
       }
 
-      if(!formatedValues.options.filter((o: Answer) => o.is_correct).length) {
+      if (!formatedValues.options.filter((o: Answer) => o.is_correct).length) {
         notify.error('Select at least one option.');
         return;
       }
 
       const formData = new FormData()
 
-      if(queId) formData.append('id', queId)
+      if (queId) formData.append('id', queId)
 
       formData.append('unit', formatedValues.unit)
       formData.append('title', formatedValues.title)
       formData.append('content', formatedValues.content)
       formData.append('type', formatedValues.type)
       if (formatedValues.asset) formData.append('asset', formatedValues.asset)
+      if (formatedValues.audio) formData.append('audio', formatedValues.audio)
       formData.append('optionImage', formatedValues.optionImage)
       formData.append('hint', formatedValues.hint)
+
+      if (deletedAudio.length) {
+          formData.append('deletedAudio', deletedAudio.join(','))
+      }
 
       formatedValues.options.forEach((opt: Answer, i: number) => {
         formData.append(`options[${i}][text]`, opt.text || '')
@@ -244,6 +252,42 @@ const QuesForm = () => {
             </div>
 
             <DragDropImage onFileSelect={(file: any) => setFieldValue("asset", file)} />
+
+
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-zinc-200">Audio (optional)</label>
+              {
+                !values.audio ?
+                  <input
+                    type="file"
+                    accept="audio/mp3, audio/wav, audio/ogg"
+                    name={`audio`}
+                    onChange={(e) => {
+                      const file = e.target.files ? e.target.files[0] : null;
+                      setFieldValue(`audio`, file);
+                    }}
+                    className="mt-2 w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500"
+                  /> : <div className="mt-2 flex gap-2">
+                    <p className="bg-zinc-800 p-2 rounded px-3">{
+                      typeof values.audio === 'string' ?
+                        (values.audio as unknown as string)?.split("/").reverse()[0] :
+                        (values?.audio as unknown as File)?.name
+                    }</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if(typeof values?.audio === 'string') setDeletedAudio(pre => ([...pre, values?.audio as unknown as string]))
+                        setFieldValue(`audio`, null);
+                      }}
+                      className="px-2 py-1 hover:bg-zinc-800 transition mt-2 md:mt-0"
+                    >
+                      <Trash2 />
+                    </button>
+                  </div>
+              }
+            </div>
+
 
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Option Image</label>
