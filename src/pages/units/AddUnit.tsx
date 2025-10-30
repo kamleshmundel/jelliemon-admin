@@ -22,7 +22,7 @@ const schema = Yup.object({
                 audio: Yup.mixed().nullable().test(
                     "fileSize",
                     "The file is too large",
-                    value => !value || (value && value.size <= 10485760) // Max file size: 10MB
+                    value => !value || (value && (value as any)?.size <= 10485760) // Max file size: 10MB
                 ),
             })
         )
