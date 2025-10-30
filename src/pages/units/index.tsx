@@ -74,9 +74,12 @@ export default function Units() {
 
     const onDelete = async (id: number) => {
         try {
-            const { message }: any = await unitsServices.deleteUnit({id});
-            setPageObj(initPageObj)
-            notify.success(message);
+            if(confirm("Are you sure?")) {
+                const { message }: any = await unitsServices.deleteUnit({id});
+                if(pageObj.page !== 1) setPageObj(initPageObj);
+                else getUnits(1);
+                notify.success(message);
+            }
         } catch(err: any) {
             notify.error(err?.message);
         }
