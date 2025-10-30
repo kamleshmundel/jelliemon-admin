@@ -45,8 +45,20 @@ export default function SubjectsTab() {
             notify.error(err?.message)
         }
     }
-
-    const handleDelete = (id: number) => { if (confirm("Are you sure?")) setSubjects(s => s.filter(x => x.id !== id)); };
+    
+    const handleDelete = async (id: number) => {
+        try {
+            if (confirm("Are you sure?")) {
+                const { message }: any = await subjectsServices.deleteSubject({id})
+                notify.success(message);
+                
+                if(pageObj.page !== 1) setPageObj(initPageObj);
+                else await getSubjects(1)
+            }
+        } catch(err: any) {
+            notify.error(err?.message)
+        }
+    };
 
     return (
         <div className="p-4 min-h-screen text-zinc-200">

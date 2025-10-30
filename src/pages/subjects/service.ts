@@ -9,6 +9,9 @@ const subjectsServices = {
     addSubjects: async (data: any) => {
         return await httpServices.postData(prefix + "subjects", data)
     },
+    deleteSubject: async (data: any) => {
+        return await httpServices.deleteData(prefix + "subjects", data)
+    },
 }
 
 export default subjectsServices
