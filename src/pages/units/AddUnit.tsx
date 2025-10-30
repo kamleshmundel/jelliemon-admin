@@ -112,7 +112,7 @@ const AddUnit = () => {
             // Send the form data to the backend
             const { message }: any = await unitsServices.addUnits(formData);  // Make sure your backend can handle FormData
             notify.success(message);
-            // nav(ROUTES.units);
+            nav(ROUTES.units);
         } catch (err: any) {
             notify.error(err?.message);
         }
