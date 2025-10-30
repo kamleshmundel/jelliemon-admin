@@ -22,7 +22,11 @@ const schema = Yup.object({
                 audio: Yup.mixed().nullable().test(
                     "fileSize",
                     "The file is too large",
-                    value => !value || (value && (value as any)?.size <= 10485760) // Max file size: 10MB
+                    value => {
+                        console.log(value, typeof value != 'string');
+                        
+                        return !value || (value && typeof value != 'string' && (value as any)?.size <= 10485760) // Max file size: 10MB
+                    }
                 ),
             })
         )
@@ -40,6 +44,7 @@ const AddUnit = () => {
     const [formData, setFormData] = useState(initForm);
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [lessons, setLessons] = useState<Lesson[]>([]);
+    const [deletedAudio, setDeletedAudio] = useState<string[]>([]);
 
     const nav = useNavigate();
     let [searchParams] = useSearchParams();
@@ -54,7 +59,7 @@ const AddUnit = () => {
             const { data } = await unitsServices.getUnits({ no_pagination: true, unitId });
             if (data?.length) {
                 const unit = data[0];
-                setFormData(pre => ({ ...pre, title: unit?.title, parts: unit?.parts || [] }));
+                setFormData(pre => ({ ...pre, title: unit?.title, audio: unit?.audio, parts: unit?.parts || [] }));
             }
         } catch (err: any) {
             notify.error(err?.message);
@@ -92,14 +97,21 @@ const AddUnit = () => {
 
     const onSubmit = async (values: any) => {
         try {
-            const reqObj = { ...values, ...(unitId ? { id: unitId } : {}) };
-            
+            const reqObj = { ...values };
+
             // Create FormData to handle the file upload
             const formData = new FormData();
+            if (+unitId!) formData.append('id', unitId!);
             formData.append('title', reqObj.title);
             formData.append('lessonId', reqObj.lessonId);
             formData.append('subjectId', reqObj.subjectId);
-    
+
+            if(deletedAudio.length) {
+                deletedAudio.forEach((del, i) => {
+                    formData.append(`deletedAudio[${i}]`, del);
+                });
+            }
+
             // Append parts and their respective audio files
             reqObj.parts.forEach((part: any, index: number) => {
                 formData.append(`parts[${index}].title`, part.title);
@@ -108,7 +120,7 @@ const AddUnit = () => {
                     formData.append(`parts[${index}].audio`, part.audio);
                 }
             });
-    
+
             // Send the form data to the backend
             const { message }: any = await unitsServices.addUnits(formData);  // Make sure your backend can handle FormData
             notify.success(message);
@@ -195,16 +207,35 @@ const AddUnit = () => {
                                         {/* File Upload for Audio */}
                                         <div className="mt-4">
                                             <label className="block text-sm font-medium text-zinc-200">Audio (optional)</label>
-                                            <input
-                                                type="file"
-                                                accept="audio/mp3, audio/wav, audio/ogg"
-                                                name={`parts[${i}].audio`}
-                                                onChange={(e) => {
-                                                    const file = e.target.files ? e.target.files[0] : null;
-                                                    setFieldValue(`parts[${i}].audio`, file);
-                                                }}
-                                                className="w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500"
-                                            />
+                                            {
+                                                !values.parts[i].audio ?
+                                                    <input
+                                                        type="file"
+                                                        accept="audio/mp3, audio/wav, audio/ogg"
+                                                        name={`parts[${i}].audio`}
+                                                        onChange={(e) => {
+                                                            const file = e.target.files ? e.target.files[0] : null;
+                                                            setFieldValue(`parts[${i}].audio`, file);
+                                                        }}
+                                                        className="mt-2 w-full border border-zinc-700 rounded-md px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500"
+                                                    /> : <div className="mt-2 flex gap-2">
+                                                        <p className="bg-zinc-800 p-2 rounded px-3">{
+                                                            typeof values.parts[i].audio === 'string' ?
+                                                        (values.parts[i].audio as unknown as string)?.split("/").reverse()[0] :
+                                                        (values?.parts[i]?.audio as unknown as File)?.name
+                                                        }</p>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setDeletedAudio(pre => ([...pre, values?.parts[i]?.audio as unknown as string]))
+                                                                setFieldValue(`parts[${i}].audio`, null);
+                                                            }}
+                                                            className="px-2 py-1 hover:bg-zinc-800 transition mt-2 md:mt-0"
+                                                        >
+                                                            <Trash2 />
+                                                        </button>
+                                                    </div>
+                                            }
                                             <ErrorMessage
                                                 name={`parts[${i}].audio`}
                                                 component="div"
