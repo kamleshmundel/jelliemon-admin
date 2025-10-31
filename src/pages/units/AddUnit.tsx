@@ -132,7 +132,10 @@ const AddUnit = () => {
                 formData.append(`parts[${index}].title`, part.title);
                 formData.append(`parts[${index}].content`, part.content);
                 if (part.audio) {
-                    formData.append(`parts[${index}].audio`, part.audio);
+                    const audio1 = part.audio.split("/").reverse()[0]
+                    const audio2 = part.audio.split("/").reverse()[1]
+                    const audio = audio2+"/"+audio1
+                    formData.append(`parts[${index}].audio`, audio);
                 }
             });
 
