@@ -20,15 +20,15 @@ const schema = Yup.object({
                 id: Yup.mixed().nullable(),
                 title: Yup.string().optional(),
                 content: Yup.string().required("Part content is required"),
-                audio: Yup.mixed().nullable().test(
-                    "fileSize",
-                    "The file is too large",
-                    value => {
-                        console.log(value, typeof value != 'string');
+                // audio: Yup.mixed().nullable().test(
+                //     "fileSize",
+                //     "The file is too large",
+                //     value => {
+                //         console.log(value, typeof value != 'string');
 
-                        return !value || (value && typeof value != 'string' && (value as any)?.size <= 10485760) // Max file size: 10MB
-                    }
-                ),
+                //         return !value || (value && typeof value != 'string' && (value as any)?.size <= 10485760) // Max file size: 10MB
+                //     }
+                // ),
             })
         )
         .min(1, "At least one part is required"),
