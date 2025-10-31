@@ -26,7 +26,7 @@ import { Comps } from "../../components";
 const initFiltersData: InitFiltersData = { subjects: [], units: [], lessons: [] };
 const initSelectedFilters = { subjectId: 0, unitId: 0, lessonId: 0 };
 
-type Answer = { text: string; is_correct: boolean; image: string; }
+type Answer = { id:number; text: string; is_correct: boolean; image: string; }
 
 const initOpts = Array.from({ length: 4 }, () => ({
   text: "",
@@ -86,10 +86,12 @@ const QuesForm = () => {
           content: que?.content,
           hint: que?.hint,
           audio: que?.audio,
+          asset: que?.asset,
           options: que?.answers.map((a: Answer) => ({
-            text: a?.text, is_correct: a?.is_correct, image: a?.image
+            id:a.id, text: a?.text, is_correct: a?.is_correct, image: a?.image
           }))
         }));
+        setOptionImage(!!que.answers.filter((a:Answer)=>!!a.image).length)
         await getLessons (que.subject_id)
         await getUnits (que.lesson_id)
         setSelectedFilters ({subjectId:que.subject_id, lessonId:que.lesson_id, unitId:que.unit_id})
@@ -188,10 +190,18 @@ const QuesForm = () => {
         formData.append(`options[${i}][text]`, opt.text || '')
         formData.append(`options[${i}][is_correct]`, opt.is_correct ? 'true' : 'false')
         if (opt.image) formData.append(`options[${i}][image]`, opt.image)
+        if (opt.id) formData.append(`options[${i}][id]`, `${opt.id}`)
       })
+    
+      if (queId){
+        const { message }: any = await questionsServices.updateQuestion(formData);
+        notify.success(message)
+      }
+      else {
+        const { message }: any = await questionsServices.addQuestion(formData);
+        notify.success(message)
+      }
 
-      const { message }: any = await questionsServices.addQuestion(formData);
-      notify.success(message)
       nav(ROUTES.questions)
 
     } catch (err: any) {
@@ -254,7 +264,7 @@ const QuesForm = () => {
               <Field as="textarea" name="content" rows={3} className="w-full border border-zinc-700 rounded px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500" />
             </div>
 
-            <DragDropImage onFileSelect={(file: any) => setFieldValue("asset", file)} />
+            <DragDropImage fileurl={values.asset} onFileSelect={(file: any) => setFieldValue("asset", file)} />
 
 
 
@@ -294,7 +304,12 @@ const QuesForm = () => {
 
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Option Image</label>
-              <input type="checkbox" checked={optionImage} onChange={() => setOptionImage(!optionImage)} />
+              <input type="checkbox" checked={optionImage} onChange={() => {
+                setOptionImage(!optionImage)
+                values.options.forEach((o, i)=>{
+                  setFieldValue(`options[${i}].image`, null)
+                })
+              }} />
             </div>
 
             <FieldArray name="options">
@@ -323,7 +338,7 @@ const QuesForm = () => {
 
                         <button
                           type="button"
-                          onClick={() => remove(i)}
+                          onClick={() => {remove(i); setFieldValue(`options[${i}].image`, null)}}
                           className="px-2 py-1 hover:bg-zinc-800 transition mt-2 md:mt-0"
                         >
                           <Trash2 />
@@ -332,12 +347,8 @@ const QuesForm = () => {
 
                       {optionImage && (
                         <div className="w-full px-9">
-                          <DragDropImage onFileSelect={(file: File) => setFieldValue(`options[${i}].image`, file)} />
-                          {opt.image && (
-                            <div className="mt-1 text-xs text-zinc-400 truncate">
-                              {(opt.image as File).name}
-                            </div>
-                          )}
+                          <DragDropImage fileurl={values.options[i].image} onFileSelect={(file: File) => setFieldValue(`options[${i}].image`, file)} />
+            
                         </div>
                       )}
                     </div>

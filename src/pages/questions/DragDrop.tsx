@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function DragDropImage({onFileSelect}: any) {
+export default function DragDropImage({fileurl, onFileSelect}: any) {
   // const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [dragOver, setDragOver] = useState(false);
 
+
+  useEffect (()=>{
+    if(fileurl && typeof fileurl === "string")setPreview(fileurl)
+   //   else setPreview("")
+
+  },[fileurl])
   const handleFile = (f: File) => {
     // setFile(f);
     onFileSelect(f);
@@ -39,7 +45,12 @@ export default function DragDropImage({onFileSelect}: any) {
           <p className="text-xs text-zinc-400">or click to browse</p>
         </div>
       ) : (
-        <img src={preview} alt="preview" className="w-full h-48 object-contain rounded" />
+        <img
+          src={preview}
+          alt="preview"
+          className="w-full h-48 object-contain rounded z-10"
+        
+        />
       )}
     </div>
   );
