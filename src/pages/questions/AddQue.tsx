@@ -90,6 +90,9 @@ const QuesForm = () => {
             text: a?.text, is_correct: a?.is_correct, image: a?.image
           }))
         }));
+        await getLessons (que.subject_id)
+        await getUnits (que.lesson_id)
+        setSelectedFilters ({subjectId:que.subject_id, lessonId:que.lesson_id, unitId:que.unit_id})
       }
 
     } catch (err: any) {
