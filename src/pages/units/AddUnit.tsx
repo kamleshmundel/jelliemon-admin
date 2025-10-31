@@ -67,7 +67,7 @@ const AddUnit = () => {
             const { data } = await unitsServices.getUnits({ no_pagination: true, unitId });
             if (data?.length) {
                 const unit = data[0];
-                setFormData(pre => ({ ...pre, title: unit?.title, audio: unit?.audio, parts: unit?.parts || [] }));
+                setFormData(pre => ({ ...pre, title: unit?.title, audio: unit?.audio, parts: unit?.parts || [], lessonId:unit.lesson_id}));
             }
         } catch (err: any) {
             notify.error(err?.message);
@@ -100,7 +100,7 @@ const AddUnit = () => {
             if (!subjectId) { setLessons([]); return; }
             const { data } = await lessonsServices.getLessons({ no_pagination: true, subject: subjectId });
             setLessons(data);
-            if (data.length) {
+            if (data.length && !unitId) {
                 const cur = data[0]?.id;
                 setFormData(pre => ({ ...pre, lessonId: cur }));
             }
