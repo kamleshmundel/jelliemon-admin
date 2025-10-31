@@ -136,6 +136,7 @@ export default function Units() {
                             <th className="px-4 py-3 text-left">Name</th>
                             <th className="px-4 py-3 text-left">Parts</th>
                             <th className="px-4 py-3 text-left">Audio</th>
+                            <th className="px-4 py-3 text-left">Play</th>
                             <th className="px-4 py-3 text-left">Actions</th>
                         </tr>
                     </thead>
@@ -148,6 +149,12 @@ export default function Units() {
                                 <td className="px-4 py-2">{l?.parts.map((p: any) => {
                                     return p?.audio?.split('/')?.reverse()[0];
                                 }).join(', ') || '-'}</td>
+                                <td className="px-4 py-2">{l?.parts.map((p: any) => {
+                                    return <audio controls>
+                                        <source src={p?.audio} type="audio/mpeg"/>
+                                         Your browser does not support the audio element.
+                                        </audio>;
+                                }) || '-'}</td>
                                 <td className="px-4 py-2 flex gap-2">
                                     <button onClick={() => onDelete(l.id)} className="flex items-center gap-1 px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-sm transition">
                                         <Trash2 size={16} /> Delete
