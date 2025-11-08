@@ -123,6 +123,47 @@ const UploadSection: React.FC<UploadSectionProps> = ({ title, type }) => {
         setData([]);
         return;
       }
+    } else if (type === "questions") {
+      const requiredCols = [
+        "UnitID",
+        "Title",
+        "Content",
+        "Hint",
+        "Option_1",
+        "Option_2",
+        "Correct",
+      ];
+      const keys = Object.keys(json[0] || {});
+      const missing = requiredCols.filter((k) => !keys.includes(k));
+
+      if (missing.length) {
+        setError(`Invalid structure: Missing columns — ${missing.join(", ")}`);
+        setData([]);
+        return;
+      }
+
+      const invalidRows = (json as any[]).filter((r) => {
+        if (!r.UnitID || !r.Title || !r.Content || !r.Correct) return true;
+        const correctIndex = Number(r.Correct);
+        const options = Object.keys(r)
+          .filter((k) => k.startsWith("Option_"))
+          .map((k) => r[k])
+          .filter(Boolean);
+        return (
+          options.length < 2 ||
+          Number.isNaN(correctIndex) ||
+          correctIndex < 1 ||
+          correctIndex > options.length
+        );
+      });
+
+      if (invalidRows.length) {
+        setError(
+          "Invalid data: Each row must have UnitID, Title, Content, Hint, at least 2 options, and a valid Correct value matching one of the options."
+        );
+        setData([]);
+        return;
+      }
     }
 
     setData(json);
@@ -174,7 +215,31 @@ const UploadSection: React.FC<UploadSectionProps> = ({ title, type }) => {
           });
           await uploadServices.addUnits(formData);
         });
+      } else if (type === "questions") {
+        for (const q of data) {
+          const options = Object.keys(q)
+            .filter((k) => k.startsWith("Option_") && q[k])
+            .map((k, i) => ({
+              text: q[k],
+              is_correct: String(i + 1) === String(q.Correct),
+            }));
 
+          const formData = new FormData();
+          formData.append("unit", q.UnitID);
+          formData.append("title", q.Title);
+          formData.append("content", q.Content);
+          formData.append("hint", q.Hint || "");
+
+          options.forEach((opt, i) => {
+            formData.append(`options[${i}][text]`, opt.text);
+            formData.append(
+              `options[${i}][is_correct]`,
+              opt.is_correct ? "true" : "false"
+            );
+          });
+
+          await uploadServices.addQuestion(formData);
+        }
       }
 
       handleDelete();
@@ -183,34 +248,61 @@ const UploadSection: React.FC<UploadSectionProps> = ({ title, type }) => {
     }
   };
 
-const handleSampleDownload = () => {
-  let data: Record<string, any>[] = [];
+  const handleSampleDownload = () => {
+    let data: Record<string, any>[] = [];
 
-  switch (type) {
-    case "subjects":
-      data = [{ Name: "Mathematics", Board: "CBSE" }];
-      break;
-    case "lessons":
-      data = [{ SubjectID: "1", Name: "Algebra Basics" }];
-      break;
-    case "units":
-      data = [{
-        Title: "Unit 1",
-        SubjectID: "1",
-        LessonId: "1",
-        PartTitle: "Introduction",
-        PartContent: "Basic concepts of algebra"
-      }];
-      break;
-    default:
-      return;
-  }
+    switch (type) {
+      case "subjects":
+        data = [{ Name: "Mathematics", Board: "CBSE" }];
+        break;
+      case "lessons":
+        data = [{ SubjectID: "1", Name: "Algebra Basics" }];
+        break;
+      case "units":
+        data = [
+          {
+            Title: "Unit 1",
+            SubjectID: "1",
+            LessonId: "1",
+            PartTitle: "Introduction",
+            PartContent: "Basic concepts of algebra",
+          },
+        ];
+        break;
+      case "questions":
+        data = [
+          {
+            UnitID: "1",
+            Title: "Addition Basics",
+            Content: "What is 2 + 2?",
+            Hint: "Think of pairs",
+            Option_1: "3",
+            Option_2: "4",
+            Option_3: "5",
+            Correct: "2",
+          },
+          {
+            UnitID: "1",
+            Title: "Subtraction Basics",
+            Content: "What is 5 - 3?",
+            Hint: "Count backwards",
+            Option_1: "1",
+            Option_2: "2",
+            Option_3: "3",
+            Correct: "2",
+          },
+        ];
+        break;
 
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Sample");
-  XLSX.writeFile(wb, `${type}-sample.xlsx`);
-};
+      default:
+        return;
+    }
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sample");
+    XLSX.writeFile(wb, `${type}-sample.xlsx`);
+  };
 
   return (
     <div className="p-6 bg-zinc-800 rounded-2xl shadow-md">
