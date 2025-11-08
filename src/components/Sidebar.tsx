@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { NavLink, useNavigate } from 'react-router-dom'
 import { ROUTES } from '../utils/constants'
 import { Users, BookOpen, Layers, BookMarked, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react'
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Upload } from "lucide-react";
 
 const sideUrls = [
   { name: 'Users', url: ROUTES.users, icon: Users },
@@ -10,6 +10,7 @@ const sideUrls = [
   { name: 'Lessons', url: ROUTES.lessons, icon: BookMarked },
   { name: 'Units', url: ROUTES.units, icon: Layers },
   { name: 'Questions', url: ROUTES.questions, icon: HelpCircle },
+  { name: 'Upload', url: ROUTES.upload, icon: Upload },
 ].map((url, i) => ({ id: i + 1, ...url }))
 
 const Sidebar = () => {

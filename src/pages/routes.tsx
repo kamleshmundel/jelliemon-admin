@@ -9,6 +9,7 @@ import Questions from "./questions";
 import { Outlet } from "react-router-dom";
 import AddQue from "./questions/AddQue";
 import AddUnit from "./units/AddUnit";
+import Upload from "./upload";
 
 const PAGE_ROUTES = [
     { path: "", element: <Dashboard /> },
@@ -30,6 +31,7 @@ const PAGE_ROUTES = [
         ]
     },
     { path: "*", element: <NotFound /> },
+    { path: "upload", element: <Upload /> },
 
 ]
 

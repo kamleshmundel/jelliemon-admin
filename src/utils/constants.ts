@@ -11,6 +11,7 @@ export const ROUTES = {
     lessons: "/lessons",
     questions: "/questions",
     queAddEdit: "/questions/add-edit",
+    upload: "/upload",
 }
 
 export const STORAGE_VAR = {
