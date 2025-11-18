@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Upload, Trash2, Download } from "lucide-react";
+import { Upload, Trash2, Download, Paperclip } from "lucide-react";
 import * as XLSX from "xlsx";
 import { notify } from "../../utils/helpers";
 import uploadServices from "./service";
@@ -37,7 +37,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ title, type }) => {
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer, { type: "array" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    let json: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
     if (type === "subjects") {
       const validBoards = ["RBSE", "CBSE", "IBSE"];
@@ -123,6 +123,8 @@ const UploadSection: React.FC<UploadSectionProps> = ({ title, type }) => {
         setData([]);
         return;
       }
+
+      json = json.map(j => ({...j, audio: null}))
     } else if (type === "questions") {
       const requiredCols = [
         "UnitID",
@@ -164,6 +166,8 @@ const UploadSection: React.FC<UploadSectionProps> = ({ title, type }) => {
         setData([]);
         return;
       }
+
+      json = json.map(j => ({...j, audio: null}))
     }
 
     setData(json);
@@ -212,6 +216,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ title, type }) => {
           obj.parts.forEach((part: any, index: number) => {
             formData.append(`parts[${index}].title`, part.title);
             formData.append(`parts[${index}].content`, part.content);
+            if(part.audio) formData.append(`parts[${index}].audio`, part.audio);
           });
           await uploadServices.addUnits(formData);
         });
@@ -230,6 +235,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ title, type }) => {
           formData.append("content", q.Content);
           formData.append("hint", q.Hint || "");
           formData.append('type', 'ssl')
+          if (q.audio) formData.append('audio', q.audio)
 
           options.forEach((opt, i) => {
             formData.append(`options[${i}][text]`, opt.text);
@@ -381,14 +387,38 @@ const UploadSection: React.FC<UploadSectionProps> = ({ title, type }) => {
             <tbody>
               {data.map((row, i) => (
                 <tr key={i} className="hover:bg-zinc-600">
-                  {Object.values(row).map((val, j) => (
-                    <td
-                      key={j}
-                      className="px-2 py-1 border-b border-zinc-700 text-zinc-200 truncate"
-                    >
-                      {String(val)}
-                    </td>
-                  ))}
+                  {Object.entries(row).map(([key, val], j) =>
+                    ["units", "questions"].includes(type) && key === "audio" ? (
+                      <td key={j} className="w-[250px] px-2 py-1 border-b border-zinc-700 text-zinc-200">
+                        {!row.audio ? (
+                          <label className="cursor-pointer flex items-center gap-2">
+                            <input
+                              type="file"
+                              accept="audio/*"
+                              onChange={e => setData(dt => {
+                                const newDt = dt.map((d, idx) => {
+                                  if(i === idx) d.audio = e.target.files?.[0] || null;
+                                  return d;
+                                })
+                                return newDt;
+                              })}
+                              className="hidden"
+                            />
+                            <Paperclip className="w-4 h-4" />
+                          </label>
+                        ) : (
+            <audio controls src={URL.createObjectURL(row.audio)} className="h-6 w-full rounded" />
+                        )}
+                      </td>
+                    ) : (
+                      <td
+                        key={j}
+                        className="px-2 py-1 border-b border-zinc-700 text-zinc-200 truncate"
+                      >
+                        {String(val)}
+                      </td>
+                    )
+                  )}
                 </tr>
               ))}
             </tbody>
