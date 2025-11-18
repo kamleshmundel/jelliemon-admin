@@ -36,7 +36,7 @@ const initOpts = Array.from({ length: 4 }, () => ({
 
 const initForm = {
   title: "",
-  type: "mcq",
+  type: "ssl",
   content: "",
   asset: null,
   audio: null,
@@ -252,7 +252,7 @@ const QuesForm = () => {
 
             <div>
               <label className="block text-sm font-medium mb-1">Question Type</label>
-              <Field as="select" name="type" className="w-full border border-zinc-700 rounded px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
+              <Field disbaled as="select" name="type" className="w-full border border-zinc-700 rounded px-3 py-2 bg-zinc-800 text-white focus:outline-none focus:ring focus:ring-indigo-500">
                 <option value="ssl">Single Selection</option>
                 <option value="mcq">Multiple Selection</option>
                 <option value="true_false">True/False</option>

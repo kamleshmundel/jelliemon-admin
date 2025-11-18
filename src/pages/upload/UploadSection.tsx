@@ -229,6 +229,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ title, type }) => {
           formData.append("title", q.Title);
           formData.append("content", q.Content);
           formData.append("hint", q.Hint || "");
+          formData.append('type', 'ssl')
 
           options.forEach((opt, i) => {
             formData.append(`options[${i}][text]`, opt.text);
